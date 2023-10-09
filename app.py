@@ -47,7 +47,7 @@ def convert_pdf_to_images(file_path, scale=300/72):
         image.save(image_byte_array, format='jpeg', optimize=True)
         image_byte_array = image_byte_array.getvalue()
         final_images.append(dict({i: image_byte_array}))
-
+    print(final_images)
     return final_images
 
 def extract_text_from_img(list_dict_final_images):
