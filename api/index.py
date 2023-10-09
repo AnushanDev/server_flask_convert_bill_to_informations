@@ -133,4 +133,4 @@ if __name__ == '__main__':
         os.makedirs(UPLOAD_FOLDER)
     
     from waitress import serve
-    serve(app, host="127.0.0.1", port=8080)
+    serve(app, host="https://server-flask-convert-bill-to-informations.vercel.app/")
