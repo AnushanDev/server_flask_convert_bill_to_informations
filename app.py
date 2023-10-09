@@ -131,6 +131,7 @@ def upload_file():
 if __name__ == '__main__':
     if not os.path.exists(UPLOAD_FOLDER):
         os.makedirs(UPLOAD_FOLDER)
-    app.run(port=5328)
+    app.run()
     """ from waitress import serve
     serve(app, host="127.0.0.1", port=8080) """
+
