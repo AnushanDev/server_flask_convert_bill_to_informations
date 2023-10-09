@@ -122,6 +122,7 @@ def upload_file():
         if file and allowed_file(file.filename):
             filename = os.path.join(app.config['UPLOAD_FOLDER'], file.filename)
             file.save(filename)
+            print(filename)
             content = extract_content_from_url(filename)
             data = extract_structured_data(content, default_data_points)
             json_data = json.loads(data)
