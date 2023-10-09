@@ -47,7 +47,7 @@ def convert_pdf_to_images(file_path, scale=300/72):
         image.save(image_byte_array, format='jpeg', optimize=True)
         image_byte_array = image_byte_array.getvalue()
         final_images.append(dict({i: image_byte_array}))
-    print(final_images)
+
     return final_images
 
 def extract_text_from_img(list_dict_final_images):
@@ -120,9 +120,7 @@ def upload_file():
         if file.filename == '':
             return 'No selected file', 400
         if file and allowed_file(file.filename):
-            filename = os.path.join(app.config['UPLOAD_FOLDER'], file.filename)
-            file.save(filename)
-            print(filename)
+            filename = os.path.join(app.config['UPLOAD_FOLDER'], "facture_1.pdf")
             content = extract_content_from_url(filename)
             data = extract_structured_data(content, default_data_points)
             json_data = json.loads(data)
