@@ -64,7 +64,6 @@ def extract_text_from_img(list_dict_final_images):
 
     image_list = [list(data.values())[0] for data in list_dict_final_images]
     image_content = []
-    print(image_list)
     for index, image_bytes in enumerate(image_list):
 
         image = Image.open(BytesIO(image_bytes))
@@ -135,10 +134,6 @@ def upload_file():
                 print("Error:", error_msg)
                 return jsonify({"error": "Failed to extract text using OCR"}), 500
             ocr_text = result.stdout.decode('utf-8').strip()
-            print(ocr_text)
-            data = extract_structured_data(ocr_text, default_data_points)
-            json_data = json.loads(data)
-            dataFiles += json_data
             print(ocr_text)
     return dataFiles, 200
 
