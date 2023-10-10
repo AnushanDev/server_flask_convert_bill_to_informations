@@ -14,6 +14,7 @@ import pypdfium2 as pdfium
 import json
 from subprocess import run, PIPE
 from PIL import Image
+import openai
 
 
 app = Flask(__name__)
@@ -55,6 +56,30 @@ def extract_structured_data(content: str, data_points):
 
     return results
 
+
+def extract_structured_data_2(content: str, data_points):
+    template = f"""
+    You are an expert admin people who will extract core information from documents
+
+    {content}
+
+    Above is the content; please try to extract all data points from the content above 
+    and export in a JSON array format:
+    {data_points}
+
+    Now please extract details from the content  and export in a JSON array format, 
+    return ONLY the JSON array:
+    """
+
+    openai.api_key = os.environ['OPENAI_API_KEY']
+    completion = openai.ChatCompletion.create(
+    model="gpt-3.5-turbo",
+    messages=[
+        {"role": "system", "content": template},
+    ])
+    data = completion.choices[0].message.content
+    return data
+
 def convert_pdf_to_text(path_pdf):
     reader = PdfReader(path_pdf)
     number_of_pages = len(reader.pages)
@@ -87,7 +112,7 @@ def upload_file():
             filename = os.path.join(app.config['UPLOAD_FOLDER'], file.filename)
             file.save(filename)
             monTxt = convert_pdf_to_text(filename)
-            data = extract_structured_data(monTxt, default_data_points)
+            data = extract_structured_data_2(monTxt, default_data_points)
             json_data = json.loads(data)
             dataFiles += json_data
     return dataFiles, 200
