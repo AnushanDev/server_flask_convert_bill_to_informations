@@ -1,5 +1,5 @@
 #python app.py
-
+from pypdf import PdfReader
 from flask import Flask, request, jsonify
 import os
 from flask_cors import CORS
@@ -28,53 +28,6 @@ app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 def allowed_file(filename):
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
 
-
-def convert_pdf_to_images(file_path, scale=300/72):
-    # Ensure the "images" directory exists
-    if not os.path.exists('images'):
-        os.makedirs('images')
-
-    pdf_file = pdfium.PdfDocument(file_path)
-    page_indices = [i for i in range(len(pdf_file))]
-
-    renderer = pdf_file.render(
-        pdfium.PdfBitmap.to_pil,
-        page_indices=page_indices,
-        scale=scale,
-    )
-
-    # Create a list to collect all rendered images
-    images_list = [image for image in renderer]
-
-    # Concatenate images vertically
-    concatenated_image = Image.new('RGB', (images_list[0].width, sum(im.height for im in images_list)))
-    y_offset = 0
-    for im in images_list:
-        concatenated_image.paste(im, (0, y_offset))
-        y_offset += im.height
-
-    # Save the concatenated image
-    image_file_path = os.path.join('images', 'all_pages.jpeg')
-    concatenated_image.save(image_file_path, format='jpeg', optimize=True)
-
-    return image_file_path
-
-
-def extract_text_from_img(list_dict_final_images):
-
-    image_list = [list(data.values())[0] for data in list_dict_final_images]
-    image_content = []
-    for index, image_bytes in enumerate(image_list):
-
-        image = Image.open(BytesIO(image_bytes))
-        raw_text = str(image_to_string(image))
-        image_content.append(raw_text)
-    return "\n".join(image_content)
-
-def extract_content_from_url(url: str):
-    images_list = convert_pdf_to_images(url)
-    return images_list
-
 # 3. Extract structured info from text via LLM
 def extract_structured_data(content: str, data_points):
     llm = ChatOpenAI(temperature=0, model="gpt-3.5-turbo-0613")
@@ -102,6 +55,12 @@ def extract_structured_data(content: str, data_points):
 
     return results
 
+def convert_pdf_to_text(path_pdf):
+    reader = PdfReader(path_pdf)
+    number_of_pages = len(reader.pages)
+    page = reader.pages[0]
+    text = page.extract_text()
+    return text
 
 
 @app.route('/hello', methods=['GET'])
@@ -127,26 +86,15 @@ def upload_file():
         if file and allowed_file(file.filename):
             filename = os.path.join(app.config['UPLOAD_FOLDER'], file.filename)
             file.save(filename)
-            content = extract_content_from_url(filename)
-            result = run(['node', 'ocr_service.js', "images/all_pages.jpeg"], stdout=PIPE, stderr=PIPE)
-            if result.returncode != 0:
-                error_msg = result.stderr.decode('utf-8').strip()
-                print("Error:", error_msg)
-                return jsonify({"error": "Failed to extract text using OCR"}), 500
-            ocr_text = result.stdout.decode('utf-8').strip()
-            print(ocr_text)
-            data = extract_structured_data(ocr_text, default_data_points)
-            print(data)
+            monTxt = convert_pdf_to_text(filename)
+            data = extract_structured_data(monTxt, default_data_points)
             json_data = json.loads(data)
             dataFiles += json_data
-            print(dataFiles)
     return dataFiles, 200
 
 if __name__ == '__main__':
     if not os.path.exists(UPLOAD_FOLDER):
         os.makedirs(UPLOAD_FOLDER)
     app.run()
-    """ from waitress import serve
-    serve(app, host="127.0.0.1", port=8080) """
 
 

@@ -8,3 +8,4 @@ pypdfium2==4.20.0
 pytesseract==0.3.10
 gunicorn
 openai
+pypdf
