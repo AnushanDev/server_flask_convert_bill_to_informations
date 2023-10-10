@@ -1,16 +1,16 @@
-import { createWorker } from 'tesseract.js';
+const T = require("tesseract.js");
 
-const worker = createWorker({
-  logger: m => console.log(m),
-});
-
-async function recognizeImage() {
-  await worker.load();
-  await worker.loadLanguage('eng');
-  await worker.initialize('eng');
-  const { data: { text } } = await worker.recognize('path_to_image.png');
-  console.log(text);
-  await worker.terminate();
+const imagePath = process.argv[2];
+console.log(imagePath);
+if (!imagePath) {
+    console.error("Please provide an image path.");
+    process.exit(1);
 }
 
-recognizeImage();
+T.recognize(imagePath, 'eng')
+    .then(out => {
+        console.log(out.data.text);
+    })
+    .catch(error => {
+        console.error("Error processing the image:", error);
+    });

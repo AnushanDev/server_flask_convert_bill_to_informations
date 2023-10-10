@@ -123,6 +123,9 @@ def upload_file():
         if file and allowed_file(file.filename):
             filename = os.path.join(app.config['UPLOAD_FOLDER'], file.filename)
             file.save(filename)
+            content = extract_content_from_url(filename)
+            print("This is the content : ")
+            print(content)
     return dataFiles, 200
 
 if __name__ == '__main__':
