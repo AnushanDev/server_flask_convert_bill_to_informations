@@ -1,7 +1,6 @@
 const T = require("tesseract.js");
 
 const imagePath = process.argv[2];
-console.log(imagePath);
 if (!imagePath) {
     console.error("Please provide an image path.");
     process.exit(1);

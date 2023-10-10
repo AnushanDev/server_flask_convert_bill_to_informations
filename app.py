@@ -136,8 +136,10 @@ def upload_file():
             ocr_text = result.stdout.decode('utf-8').strip()
             print(ocr_text)
             data = extract_structured_data(ocr_text, default_data_points)
+            print(data)
             json_data = json.loads(data)
             dataFiles += json_data
+            print(dataFiles)
     return dataFiles, 200
 
 if __name__ == '__main__':
