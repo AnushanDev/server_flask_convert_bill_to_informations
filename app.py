@@ -13,6 +13,7 @@ from io import BytesIO
 import pypdfium2 as pdfium
 import json
 from subprocess import run, PIPE
+from PIL import Image
 
 
 app = Flask(__name__)
@@ -29,9 +30,11 @@ def allowed_file(filename):
 
 
 def convert_pdf_to_images(file_path, scale=300/72):
+    # Ensure the "images" directory exists
+    if not os.path.exists('images'):
+        os.makedirs('images')
 
     pdf_file = pdfium.PdfDocument(file_path)
-
     page_indices = [i for i in range(len(pdf_file))]
 
     renderer = pdf_file.render(
@@ -40,35 +43,38 @@ def convert_pdf_to_images(file_path, scale=300/72):
         scale=scale,
     )
 
-    final_images = []
+    # Create a list to collect all rendered images
+    images_list = [image for image in renderer]
 
-    for i, image in zip(page_indices, renderer):
+    # Concatenate images vertically
+    concatenated_image = Image.new('RGB', (images_list[0].width, sum(im.height for im in images_list)))
+    y_offset = 0
+    for im in images_list:
+        concatenated_image.paste(im, (0, y_offset))
+        y_offset += im.height
 
-        image_byte_array = BytesIO()
-        image.save(image_byte_array, format='jpeg', optimize=True)
-        image_byte_array = image_byte_array.getvalue()
-        final_images.append(dict({i: image_byte_array}))
+    # Save the concatenated image
+    image_file_path = os.path.join('images', 'all_pages.jpeg')
+    concatenated_image.save(image_file_path, format='jpeg', optimize=True)
 
-    return final_images
+    return image_file_path
+
 
 def extract_text_from_img(list_dict_final_images):
 
     image_list = [list(data.values())[0] for data in list_dict_final_images]
     image_content = []
-
+    print(image_list)
     for index, image_bytes in enumerate(image_list):
 
         image = Image.open(BytesIO(image_bytes))
         raw_text = str(image_to_string(image))
         image_content.append(raw_text)
-
     return "\n".join(image_content)
 
 def extract_content_from_url(url: str):
     images_list = convert_pdf_to_images(url)
-    text_with_pytesseract = extract_text_from_img(images_list)
-
-    return text_with_pytesseract
+    return images_list
 
 # 3. Extract structured info from text via LLM
 def extract_structured_data(content: str, data_points):
@@ -115,7 +121,6 @@ def upload_file():
     if 'file0' not in request.files:
         return jsonify({'error': 'No file part'}), 400
     files = [request.files[f] for f in request.files]
-    file_names = []
     dataFiles = []
     for file in files:
         if file.filename == '':
@@ -124,8 +129,17 @@ def upload_file():
             filename = os.path.join(app.config['UPLOAD_FOLDER'], file.filename)
             file.save(filename)
             content = extract_content_from_url(filename)
-            print("This is the content : ")
-            print(content)
+            result = run(['node', 'ocr_service.js', "images/all_pages.jpeg"], stdout=PIPE, stderr=PIPE)
+            if result.returncode != 0:
+                error_msg = result.stderr.decode('utf-8').strip()
+                print("Error:", error_msg)
+                return jsonify({"error": "Failed to extract text using OCR"}), 500
+            ocr_text = result.stdout.decode('utf-8').strip()
+            print(ocr_text)
+            data = extract_structured_data(ocr_text, default_data_points)
+            json_data = json.loads(data)
+            dataFiles += json_data
+            print(ocr_text)
     return dataFiles, 200
 
 if __name__ == '__main__':

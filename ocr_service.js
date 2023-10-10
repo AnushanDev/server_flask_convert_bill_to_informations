@@ -14,3 +14,4 @@ T.recognize(imagePath, 'eng')
     .catch(error => {
         console.error("Error processing the image:", error);
     });
+
