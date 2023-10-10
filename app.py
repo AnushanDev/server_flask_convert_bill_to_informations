@@ -17,7 +17,7 @@ from PIL import Image
 
 
 app = Flask(__name__)
-CORS(app, origins=["http://localhost:3000"])
+CORS(app, origins=["http://localhost:3000", "https://anushanalvaipillai.vercel.app/"])
 load_dotenv()
 
 UPLOAD_FOLDER = 'uploads'
