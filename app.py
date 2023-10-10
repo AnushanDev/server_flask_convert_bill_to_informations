@@ -134,7 +134,10 @@ def upload_file():
                 print("Error:", error_msg)
                 return jsonify({"error": "Failed to extract text using OCR"}), 500
             ocr_text = result.stdout.decode('utf-8').strip()
-            print(ocr_text)
+            content = extract_content_from_url(ocr_text)
+            data = extract_structured_data(content, default_data_points)
+            json_data = json.loads(data)
+            dataFiles += json_data
     return dataFiles, 200
 
 if __name__ == '__main__':
