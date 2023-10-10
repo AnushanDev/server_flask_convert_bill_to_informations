@@ -12,6 +12,7 @@ from PIL import Image
 from io import BytesIO
 import pypdfium2 as pdfium
 import json
+from subprocess import run, PIPE
 
 
 app = Flask(__name__)
@@ -120,11 +121,8 @@ def upload_file():
         if file.filename == '':
             return 'No selected file', 400
         if file and allowed_file(file.filename):
-            filename = os.path.join(app.config['UPLOAD_FOLDER'], "facture_1.pdf")
-            content = extract_content_from_url(filename)
-            data = extract_structured_data(content, default_data_points)
-            json_data = json.loads(data)
-            dataFiles += json_data
+            filename = os.path.join(app.config['UPLOAD_FOLDER'], file.filename)
+            file.save(filename)
     return dataFiles, 200
 
 if __name__ == '__main__':
@@ -133,4 +131,5 @@ if __name__ == '__main__':
     app.run()
     """ from waitress import serve
     serve(app, host="127.0.0.1", port=8080) """
+
 
