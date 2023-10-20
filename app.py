@@ -66,7 +66,7 @@ def get_hello():
 def upload_file():
     default_data_points = """{
         "invoice_item": "what is the item that charged",
-        "Amount": "how much does the invoice item cost in total",
+        "Amount": "how much does the invoice item cost in total with VAT included",
         "Company_name": "company that issued the invoice",
         "invoice_date": "when was the invoice issued",
     }"""
